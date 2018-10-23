@@ -214,6 +214,7 @@ prefix = 'cogs.'
 for extension in [
     'characters',
     'rolls',
+    'attacks',
 ]:
     bot.load_extension(prefix + extension)
 
