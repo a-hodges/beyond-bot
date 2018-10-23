@@ -98,9 +98,9 @@ def is_my_delete_emoji(reaction):
 
 
 @bot.event
-async def on_raw_reaction_add(emoji: discord.PartialEmoji, message_id: int, channel_id: int, user_id: int):
-    if user_id != bot.user.id and str(emoji) == delete_emoji:
-        message = await bot.get_channel(channel_id).get_message(message_id)
+async def on_raw_reaction_add(payload):
+    if payload.user_id != bot.user.id and str(payload.emoji) == delete_emoji:
+        message = await bot.get_channel(payload.channel_id).get_message(payload.message_id)
         if discord.utils.find(is_my_delete_emoji, message.reactions):
             await message.delete()
 
