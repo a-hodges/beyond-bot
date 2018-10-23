@@ -22,7 +22,7 @@ async def do_roll(expression, output=[]):
         elif match.group(2) in ['dis', 'disadv', 'disadvantage']:
             adv = -1
         else:
-            raise Exception('Invalid adv/disadv operator')
+            raise ValueError('Invalid adv/disadv operator')
     else:
         adv = 0
 
