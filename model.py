@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
 
-import enum
-
 from sqlalchemy import (
     Column,
     String,
     Integer,
     BigInteger,
 )
-from sqlalchemy.orm import relationship
-from sqlalchemy.schema import Index, UniqueConstraint
-from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.ext.declarative import declarative_base
 
 
@@ -109,8 +104,5 @@ if __name__ == '__main__':
                 col += ' NOT NULL'
 
             doc = column.doc
-            if isinstance(column.type, Enum):
-                doc += ': ' + ', '.join(
-                    column.type.python_type.__members__.keys())
             print('\t{}\n\t\t{}'.format(col, doc))
         print()

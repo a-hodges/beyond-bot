@@ -4,7 +4,6 @@ from itertools import chain
 
 import discord
 from discord.ext import commands
-from sqlalchemy import func
 import equations
 
 from . import util

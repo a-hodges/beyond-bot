@@ -55,6 +55,8 @@ async def on_ready():
     print(bot.user.id)
     print('------')
     game = 'Type `@{} help` for command list'.format(bot.user.name)
+    game = discord.Game(game)
+    await bot.change_presence(activity=game)
 
 
 @bot.before_invoke

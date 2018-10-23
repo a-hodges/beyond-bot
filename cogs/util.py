@@ -1,3 +1,6 @@
+from discord.ext import commands
+
+
 class BotError (Exception):
     pass
 

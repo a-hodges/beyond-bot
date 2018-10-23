@@ -1,5 +1,4 @@
-from math import ceil, floor
-from operator import itemgetter
+from math import ceil
 
 import requests
 
@@ -7,8 +6,10 @@ URL_BASE = "https://www.dndbeyond.com/"
 CHARACTER_URL = URL_BASE + "/character/{id}/json"
 CONFIG_URL = URL_BASE + "/api/config/json"
 
+
 def slug(text):
     return text.lower().replace(' ', '-')
+
 
 class Character:
     stat_list = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
@@ -58,7 +59,6 @@ class Character:
 
     def get_value(self, stat, base=0):
         """Calculates the final value of a stat, based on modifiers and feats..."""
-        bonus = 0
         setval = None
         for modtype in self.json['modifiers'].values():
             for mod in modtype:
@@ -88,12 +88,12 @@ class Character:
 
         for i, stat in enumerate(self.stat_list):
             name = stat[:3]
-            if override[i+1] is not None:
-                s = override[i+1]
+            if override[i + 1] is not None:
+                s = override[i + 1]
             else:
                 s = 10
-                s = base[i+1] or s
-                s += bonus[i+1] or 0
+                s = base[i + 1] or s
+                s += bonus[i + 1] or 0
                 s = self.get_value(f"{stat}-score", base=s)
             stats[name] = s
             stats[name + 'mod'] = s // 2 - 5
@@ -107,7 +107,7 @@ class Character:
     def get_mod(self, name):
         if isinstance(name, int):
             name = self.stat_list[name - 1]
-        return self.stats[name[:3]+'mod']
+        return self.stats[name[:3] + 'mod']
 
     @property
     def levels(self):
@@ -182,7 +182,7 @@ class Character:
                 profs[name] = s['proficiencyLevel']
                 bonuses[name] = bonuses.get(name, 0) + (s['magicBonus'] or 0) + (s['miscBonus'] or 0)
                 if s['override'] is not None:
-                    override[name] = s['override']
+                    overrides[name] = s['override']
 
         for name in skills:
             type = None
@@ -199,6 +199,9 @@ class Character:
             elif prof == 4:  # expertise
                 skills[name] += proficiency * 2
             skills[name] += bonus
+
+        for name, value in overrides.items():
+            skills[name] = value
 
         self._skills = skills
         return skills
@@ -238,8 +241,9 @@ class Character:
             'isPact': False
         }
         for val in self.json['characterValues']:
-            if not val['valueId'] == itemId: continue
-            if val['typeId'] == 10:  # damage bonus
+            if val['valueId'] != itemId:
+                pass
+            elif val['typeId'] == 10:  # damage bonus
                 out['damage'] += val['value']
             elif val['typeId'] == 12:  # to hit bonus
                 out['attackBonus'] += val['value']
@@ -251,7 +255,6 @@ class Character:
 
     def get_attack(self, atkIn, atkType):
         """Calculates and returns a list of dicts."""
-        #if atkIn['name'] == 'Handaxe2':
         stats = self.stats
         prof = stats['prof']
         out = []
@@ -297,8 +300,8 @@ class Character:
                 'attackBonus': str(
                     weirdBonuses['attackBonusOverride'] or self.get_relevant_atkmod(itemdef) + toHitBonus),
                 'damage': f"{itemdef['damage']['diceString']}+{dmgBonus}",
-                'damageType': itemdef['damageType'].lower()
-                    + ('^' if itemdef['magic'] or weirdBonuses['isPact'] else ''),
+                'damageType': itemdef['damageType'].lower() +
+                ('^' if itemdef['magic'] or weirdBonuses['isPact'] else ''),
                 'name': itemdef['name'],
                 # 'details': html2text.html2text(itemdef['description'], bodywidth=0).strip()
             }
@@ -309,8 +312,8 @@ class Character:
                     {
                         'attackBonus': attack['attackBonus'],
                         'damage': f"{versDmg}+{dmgBonus}",
-                        'damageType': itemdef['damageType'].lower()
-                            + ('^' if itemdef['magic'] or weirdBonuses['isPact'] else ''),
+                        'damageType': itemdef['damageType'].lower() +
+                        ('^' if itemdef['magic'] or weirdBonuses['isPact'] else ''),
                         'name': f"{itemdef['name']}2h",
                         # 'details': attack['details']
                     }
@@ -323,7 +326,6 @@ class Character:
 
         if attack['attackBonus'] is not None:
             attack['attackBonus'] = int(attack['attackBonus'])
-        #attack['attackBonus'] = attack['attackBonus'].replace('+', '', 1) if attack['attackBonus'] is not None else None
         out.insert(0, attack)
 
         return out
@@ -353,7 +355,7 @@ class Character:
                 extend(self.get_attack(action, "customAction"))
         for item in self.json['inventory']:
             if item['equipped'] and (item['definition']['filterType'] == "Weapon" or item.get('displayAsAttack')):
-                if item.get('displayAsAttack') != False:
+                if item.get('displayAsAttack') is not False:
                     extend(self.get_attack(item, "item"))
         return attacks
 
