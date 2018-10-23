@@ -130,8 +130,8 @@ async def do_roll(expression, output=[]):
 
 
 class RollCategory (util.Cog):
-    @commands.group('roll', aliases=['r'], invoke_without_command=True)
-    async def group(self, ctx, *, expression: str):
+    @commands.command(aliases=['r'], invoke_without_command=True)
+    async def roll(self, ctx, *, expression: str):
         '''
         Rolls dice
         Note: If a variable name is included in a roll the name will be replaced with the value of the variable
