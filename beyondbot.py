@@ -207,9 +207,9 @@ async def checkprefix(ctx):
     await msg.add_reaction(delete_emoji)
 
 
-prefix = __name__ + '.cogs.'
+prefix = 'cogs.'
 for extension in [
-    # 'rolls',
+    'rolls',
 ]:
     bot.load_extension(prefix + extension)
 
