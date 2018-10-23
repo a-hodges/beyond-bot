@@ -1,6 +1,7 @@
 # install with: pip install -r requirements.txt
 
 # equation solver
+requests ~= 2.20.0
 equations ~= 1.0
 
 # Special discord version
