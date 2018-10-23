@@ -1,0 +1,11 @@
+# install with: pip install -r requirements.txt
+
+# equation solver
+equations ~= 1.0
+
+# Special discord version
+git+git://github.com/Rapptz/discord.py.git@rewrite#egg=discord-py
+
+# database
+sqlalchemy ~= 1.2
+psycopg2-binary ~= 2.7
