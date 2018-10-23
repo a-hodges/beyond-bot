@@ -67,6 +67,7 @@ class Character (Base):
         doc='The id of the user of the character')
     character = Column(
         Integer,
+        nullable=False,
         doc='The id of the character on D&D Beyond')
 
     def __str__(self):
