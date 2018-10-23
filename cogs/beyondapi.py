@@ -12,8 +12,6 @@ def slug(text):
 
 
 class Character:
-    stat_list = ['strength', 'dexterity', 'constitution', 'intelligence', 'wisdom', 'charisma']
-
     def __init__(self, id):
         self.setup()
         self.url = CHARACTER_URL.format(id=id)
@@ -358,6 +356,29 @@ class Character:
                 if item.get('displayAsAttack') is not False:
                     extend(self.get_attack(item, "item"))
         return attacks
+
+    def embed(self):
+        color = self.json['themeColor']['themeColor']
+        r = int(color[1:3], 16)
+        g = int(color[3:5], 16)
+        b = int(color[5:7], 16)
+        fields = []
+        for c in self.json['classes']:
+            level = c['level']
+            name = c['definition']['name']
+            subclass = c['subclassDefinition']['name']
+            fields.append({'name': f'{subclass} {name}', 'value': level, 'inline': True})
+        fields.append({'name': f'AC', 'value': self.ac, 'inline': True})
+        embed = {
+            'color': (r*256 + g * 16 + b),
+            'author': {
+                'name': self.name,
+                'url': self.json['readonlyUrl'],
+                'icon_url': self.json['avatarUrl'],
+            },
+            'fields': fields,
+        }
+        return embed
 
 
 if __name__ == '__main__':
