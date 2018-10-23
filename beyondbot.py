@@ -26,7 +26,7 @@ from equations import EquationError
 import model as m
 
 
-default_prefix = ';'
+default_prefix = '/'
 
 
 async def get_prefix(bot: commands.Bot, message: discord.Message):
