@@ -2,7 +2,7 @@ from math import ceil
 
 import requests
 
-URL_BASE = "https://www.dndbeyond.com/"
+URL_BASE = "https://www.dndbeyond.com"
 CHARACTER_URL = URL_BASE + "/character/{id}/json"
 CONFIG_URL = URL_BASE + "/api/config/json"
 
@@ -357,28 +357,30 @@ class Character:
                     extend(self.get_attack(item, "item"))
         return attacks
 
-    def embed(self):
-        color = self.json['themeColor']['themeColor']
+    def color(self):
+        color = (self.json.get('themeColor') or {}).get('themeColor') or '#FF0000'
         r = int(color[1:3], 16)
         g = int(color[3:5], 16)
         b = int(color[5:7], 16)
-        fields = []
+        return r * 256 + g * 16 + b
+
+    def embed_fields(self):
         for c in self.json['classes']:
             level = c['level']
             name = c['definition']['name']
-            subclass = c['subclassDefinition']['name']
-            fields.append({'name': f'{subclass} {name}', 'value': level, 'inline': True})
-        fields.append({'name': f'AC', 'value': self.ac, 'inline': True})
-        embed = {
-            'color': (r*256 + g * 16 + b),
-            'author': {
-                'name': self.name,
-                'url': self.json['readonlyUrl'],
-                'icon_url': self.json['avatarUrl'],
-            },
-            'fields': fields,
+            if c['subclassDefinition'] is not None:
+                subclass = c['subclassDefinition']['name']
+                yield {'name': f'{subclass} {name}', 'value': level, 'inline': True}
+            else:
+                yield {'name': f'{name}', 'value': level, 'inline': True}
+        yield {'name': f'AC', 'value': self.ac, 'inline': True}
+
+    def embed_author(self):
+        return {
+            'name': self.name,
+            'url': self.json['readonlyUrl'],
+            'icon_url': self.json['avatarUrl'],
         }
-        return embed
 
 
 if __name__ == '__main__':
