@@ -1,4 +1,5 @@
 from math import ceil
+from collections import OrderedDict
 
 import requests
 
@@ -150,7 +151,7 @@ class Character:
 
         proficiency = self.stats['prof']
 
-        skills = {}
+        skills = OrderedDict()
         profs = {}
         bonuses = {}
         overrides = {}
@@ -169,8 +170,6 @@ class Character:
 
         for i, skill in enumerate(self.skill_list.keys()):
             skills[skill] = self.get_mod(self.skill_list[skill])
-        for i, stat in enumerate(self.stat_list):
-            skills[stat + '-saving-throws'] = self.get_mod(stat)
 
         # handle custom skills
         for s in self.json['customProficiencies']:
@@ -181,6 +180,9 @@ class Character:
                 bonuses[name] = bonuses.get(name, 0) + (s['magicBonus'] or 0) + (s['miscBonus'] or 0)
                 if s['override'] is not None:
                     overrides[name] = s['override']
+
+        for i, stat in enumerate(self.stat_list):
+            skills[stat + '-saving-throws'] = self.get_mod(stat)
 
         for name in skills:
             type = None
