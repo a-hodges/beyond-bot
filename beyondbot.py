@@ -32,7 +32,7 @@ default_prefix = '/'
 async def get_prefix(bot: commands.Bot, message: discord.Message):
     if message.guild:
         with closing(bot.Session()) as session:
-            item = session.query(m.Prefix).get(str(message.guild.id))
+            item = session.query(m.Prefix).get(message.guild.id)
             prefix = default_prefix if item is None else item.prefix
     else:
         prefix = default_prefix
@@ -171,7 +171,7 @@ async def setprefix(ctx, prefix: str = default_prefix):
     [prefix] the new prefix for the server
         leave blank to reset
     '''
-    guild_id = str(ctx.guild.id)
+    guild_id = ctx.guild.id
     item = ctx.session.query(m.Prefix).get(guild_id)
     if prefix == default_prefix:
         if item is not None:
@@ -198,7 +198,7 @@ async def checkprefix(ctx):
     '''
     if ctx.guild:
         with closing(bot.Session()) as session:
-            item = session.query(m.Prefix).get(str(ctx.guild.id))
+            item = session.query(m.Prefix).get(ctx.guild.id)
             prefix = default_prefix if item is None else item.prefix
     else:
         prefix = default_prefix
