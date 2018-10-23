@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 
-from . import beyondapi as api
 from . import model as m
 from . import util
 
