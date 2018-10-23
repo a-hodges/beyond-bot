@@ -9,22 +9,13 @@ import equations
 from . import util
 
 
-async def do_roll(expression, output=[]):
+async def do_roll(expression, advantage=None, output=[]):
     '''
     Rolls dice
     '''
     expression = expression.strip()
-    match = re.match(r'^(.*)\s+((?:dis)?adv|dis|(?:dis)?advantage)$', expression)
-    if match:
-        expression = match.group(1)
-        if match.group(2) in ['adv', 'advantage']:
-            adv = 1
-        elif match.group(2) in ['dis', 'disadv', 'disadvantage']:
-            adv = -1
-        else:
-            raise ValueError('Invalid adv/disadv operator')
-    else:
-        adv = 0
+    if advantage is None:
+        advantage = 0
 
     original_expression = expression
 
@@ -94,9 +85,9 @@ async def do_roll(expression, output=[]):
     operations.append({'>': max, '<': min})
 
     dice = {}
-    if adv == 0:
+    if advantage == 0:
         dice['d'] = roll_dice
-    elif adv > 0:
+    elif advantage > 0:
         dice['d'] = roll_advantage
     else:
         dice['d'] = roll_disadvantage
@@ -130,8 +121,8 @@ async def do_roll(expression, output=[]):
 
 
 class RollCategory (util.Cog):
-    @commands.command(aliases=['r'], invoke_without_command=True)
-    async def roll(self, ctx, *, expression: str):
+    @commands.group('roll', aliases=['r'], invoke_without_command=True)
+    async def group(self, ctx, *, expression: str):
         '''
         Rolls dice
         Note: If a variable name is included in a roll the name will be replaced with the value of the variable
@@ -140,9 +131,6 @@ class RollCategory (util.Cog):
         [expression*] standard dice notation specifying what to roll
             The expression may include saved rolls, replacing the name with the roll itself
             Rolls may contain other rolls up to 3 levels deep
-        [adv] (optional) roll any 1d20s with advantage or disadvantage for the following options:
-            Advantage: `adv` | `advantage`
-            Disadvantage: `dis` | `disadv` | `disadvantage`
 
         Mathematic operations from highest precedence to lowest:
 
@@ -170,10 +158,23 @@ class RollCategory (util.Cog):
             raise commands.MissingRequiredArgument('expression')
         expression = util.strip_quotes(expression)
 
+        if not hasattr(ctx, 'advantage'):
+            ctx.advantage = 0
+
         output = []
-        await do_roll(expression, output=output)
+        await do_roll(expression, advantage=ctx.advantage, output=output)
         embed = discord.Embed(description='\n'.join(output), color=ctx.author.color)
         await ctx.send(embed=embed)
+
+    @group.command(aliases=['adv'])
+    async def advantage(self, ctx, *, expression: str):
+        ctx.advantage = 1
+        await ctx.invoke(self.group, expression=expression)
+
+    @group.command(aliases=['dis', 'disadv'])
+    async def disadvantage(self, ctx, *, expression: str):
+        ctx.advantage = -1
+        await ctx.invoke(self.group, expression=expression)
 
 
 def setup(bot):
