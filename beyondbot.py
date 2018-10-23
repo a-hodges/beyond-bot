@@ -211,6 +211,7 @@ async def checkprefix(ctx):
 
 prefix = 'cogs.'
 for extension in [
+    'characters',
     'rolls',
 ]:
     bot.load_extension(prefix + extension)
