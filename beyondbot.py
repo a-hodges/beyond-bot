@@ -23,7 +23,7 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from equations import EquationError
 
-import model as m
+from cogs import model as m
 
 
 default_prefix = '/'
