@@ -184,9 +184,7 @@ async def setprefix(ctx, prefix: str = default_prefix):
         ctx.session.rollback()
         raise Exception('Could not change prefix, an unknown error occured')
     else:
-        embed = discord.Embed()
-        embed.description = 'Prefix changed to `{}`'.format(prefix)
-        embed.color = ctx.author.color
+        embed = discord.Embed(description='Prefix changed to `{}`'.format(prefix), color=ctx.author.color)
         await ctx.send(embed=embed)
 
 
