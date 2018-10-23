@@ -143,6 +143,7 @@ async def on_command_error(ctx, error: Exception):
             message = 'Invalid parameter'
     elif isinstance(error, Exception):
         message = 'Error: {}'.format(error)
+        unknown = True
     else:
         message = 'Error: {}'.format(error)
         unknown = True
