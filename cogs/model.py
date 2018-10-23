@@ -43,7 +43,7 @@ class Prefix (Base):
     __tablename__ = 'prefixes'
 
     server = Column(
-        String(64),
+        BigInteger,
         primary_key=True,
         doc='The server id for the prefix')
     prefix = Column(
@@ -58,11 +58,11 @@ class Character (Base):
     __tablename__ = 'characters'
 
     server = Column(
-        String(64),
+        BigInteger,
         primary_key=True,
         doc='The server the character is on')
     user = Column(
-        String(64),
+        BigInteger,
         primary_key=True,
         doc='The id of the user of the character')
     character = Column(
