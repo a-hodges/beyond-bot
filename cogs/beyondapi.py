@@ -185,6 +185,8 @@ class Character:
         for i, stat in enumerate(self.stat_list):
             skills[stat + '-saving-throws'] = self.get_mod(stat)
 
+        skills['initiative'] = self.get_mod(2)
+
         for name in skills:
             type = None
             if name.endswith('-saving-throws'):
