@@ -1,3 +1,5 @@
+import re
+
 import discord
 from discord.ext import commands
 
@@ -5,9 +7,19 @@ from . import model as m
 from . import util
 
 
+CHARACTER_URL = re.compile(r'(?:https://)?(?:www\.)?dndbeyond\.com/profile/\w+/characters/(\d+)')
+SHARE_URL = re.compile(r'(?:https://)?ddb\.ac/characters/(\d+)/\w+')
+NUMBER_EXPR = re.compile(r'(\d+)')
+
+
 class CharacterCategory (util.Cog):
     @commands.command(ignore_extra=False)
-    async def iam(self, ctx, id: int):
+    async def iam(self, ctx, id: str):
+        for pattern in [CHARACTER_URL, SHARE_URL, NUMBER_EXPR]:
+            match = pattern.match(id)
+            if match is not None:
+                id = int(match.group(1))
+                break
         character = util.get_character(id)
         claim = ctx.session.query(m.Character).get((ctx.guild.id, ctx.author.id))
         if claim is not None:
