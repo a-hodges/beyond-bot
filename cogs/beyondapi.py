@@ -19,7 +19,7 @@ class Character:
         self.url = CHARACTER_URL.format(id=id)
         r = requests.get(self.url)
         if not r:
-            raise ValueError('Could not find character')
+            raise ValueError('Could not find character\nYou may need to share it publicly')
         self.json = r.json()
 
     def setup(self):
