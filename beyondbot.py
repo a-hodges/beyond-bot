@@ -216,6 +216,7 @@ for extension in [
     'rolls',
     'attacks',
     'skills',
+    'custom_rolls',
 ]:
     bot.load_extension(prefix + extension)
 
