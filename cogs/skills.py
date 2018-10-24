@@ -18,7 +18,7 @@ class SkillCategory (util.Cog):
         character = util.get_character(ctx, ctx.author.id)
         skill = character.skills.get(name.lower())
         if skill is None:
-            raise ValueError('No attack with that name')
+            raise ValueError('No skill with that name')
 
         if ctx.advantage > 0:
             name += ' with advantage'
