@@ -1,5 +1,6 @@
 from math import ceil
 from collections import OrderedDict
+import re
 
 import requests
 
@@ -358,6 +359,42 @@ class Character:
                 if item.get('displayAsAttack') is not False:
                     extend(self.get_attack(item, "item"))
         return attacks
+
+    # ----#-   Custom getters
+
+    roll_expr = re.compile(r'\s*(.+?)\s*:\s*(.+)')
+    attack_expr = re.compile(r'\s*(.+?)\s*:\s*([+-]?\d+)\s*,\s*([^,]+)\s*,\s*([^,]+)')
+
+    def custom_attacks(self):
+        notes = self.json['notes']['otherNotes']
+        notes = notes.split('\n')
+        attacks = []
+        for line in notes:
+            m = self.attack_expr.match(line)
+            if m is not None:
+                name, attackBonus, damage, damageType = m.groups()
+                attacks.append({'name': name, 'attackBonus': int(attackBonus), 'damage': damage, 'damageType': damageType})
+        return attacks
+
+    def all_attacks(self):
+        attacks = self.custom_attacks()
+        names = set(a['name'].lower() for a in attacks)
+        attacks.extend(filter(lambda a: a['name'].lower() not in names, self.attacks))
+        return attacks
+
+    def custom_rolls(self):
+        notes = self.json['notes']['otherNotes']
+        notes = notes.split('\n')
+        skills = {}
+        for line in notes:
+            rm = self.roll_expr.match(line)
+            am = self.attack_expr.match(line)
+            if am is None and rm is not None:
+                name, expr = rm.groups()
+                skills[name.lower()] = expr
+        return skills
+
+    # ----#-   Embed stuff
 
     def color(self):
         color = (self.json.get('themeColor') or {}).get('themeColor') or '#FF0000'
