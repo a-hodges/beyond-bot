@@ -17,7 +17,7 @@ class AttackCategory (util.Cog):
 
         character = util.get_character(ctx, ctx.author.id)
         attack = None
-        for a in character.attacks:
+        for a in character.all_attacks():
             if a['name'].lower() == name.lower():
                 attack = a
                 break
@@ -58,7 +58,7 @@ class AttackCategory (util.Cog):
     @group.command(ignore_extra=False)
     async def list(self, ctx):
         character = util.get_character(ctx, ctx.author.id)
-        attacks = map("{0[name]}: {0[attackBonus]:+d}, {0[damage]}, {0[damageType]}".format, character.attacks)
+        attacks = map("{0[name]}: {0[attackBonus]:+d}, {0[damage]}, {0[damageType]}".format, character.all_attacks())
         embed = discord.Embed(description='\n'.join(attacks), color=character.color())
         embed.set_author(**character.embed_author())
         await ctx.send(embed=embed)
