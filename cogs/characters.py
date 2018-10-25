@@ -20,6 +20,8 @@ class CharacterCategory (util.Cog):
             if match is not None:
                 id = int(match.group(1))
                 break
+        else:
+            raise commands.BadArgument('id')
         character = util.get_character(id)
         claim = ctx.session.query(m.Character).get((ctx.guild.id, ctx.author.id))
         if claim is not None:
