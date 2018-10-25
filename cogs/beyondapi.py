@@ -1,5 +1,6 @@
 from math import ceil
 from collections import OrderedDict, defaultdict
+from itertools import chain
 import re
 from pprint import pprint
 
@@ -34,9 +35,11 @@ class Character:
             name = slug(stat['name'])
             self.stat_list.append(name)
         self.skill_list = {}
+        self.skill_ids = {}
         for skill in config['abilitySkills']:
             name = slug(skill['name'])
             self.skill_list[name] = skill['stat']
+            self.skill_ids[skill['id']] = name
 
         self.adjustment_types = {d['id']: d for d in config['adjustmentTypes']}
         self.damage_types = {d['id']: slug(d['name']) for d in config['damageTypes']}
@@ -170,6 +173,8 @@ class Character:
         profs = {}
         bonuses = {}
         overrides = {}
+
+        # get modifiers
         for modtype in self.json['modifiers'].values():
             for mod in modtype:
                 name = mod['subType']
@@ -200,6 +205,39 @@ class Character:
 
         skills['initiative'] = self.get_mod(2)
 
+        # adjustments
+        skill_bonuses = self.adjustments.get('Skill Magic Bonus', {}).values()
+        skill_bonuses = chain(skill_bonuses, self.adjustments.get('Skill Misc Bonus', {}).values())
+        for adj in skill_bonuses:
+            skill = self.skill_ids[adj['valueId']]
+            bonuses[skill] = bonuses.get(skill, 0) + (adj['value'] or 0)
+        for adj in self.adjustments.get('Skill Override', {}).values():
+            skill = self.skill_ids[adj['valueId']]
+            if adj['value'] is not None:
+                overrides[skill] = adj['value']
+        for adj in self.adjustments.get('Skill Proficiency Level', {}).values():
+            skill = self.skill_ids[adj['valueId']]
+            if adj['value'] is not None:
+                profs[skill] = adj['value']
+        for adj in self.adjustments.get('Skill Stat Override', {}).values():
+            skill = self.skill_ids[adj['valueId']]
+            if adj['value'] is not None:
+                skills[skill] = self.get_mod(adj['value'])
+        save_bonuses = self.adjustments.get('Saving Throw Magic Bonus', {}).values()
+        save_bonuses = chain(skill_bonuses, self.adjustments.get('Saving Throw Misc Bonus', {}).values())
+        for adj in save_bonuses:
+            skill = self.stat_list[adj['valueId'] - 1] + '-saving-throws'
+            bonuses[skill] = bonuses.get(skill, 0) + (adj['value'] or 0)
+        for adj in self.adjustments.get('Saving Throw Override', {}).values():
+            skill = self.stat_list[adj['valueId'] - 1] + '-saving-throws'
+            if adj['value'] is not None:
+                overrides[skill] = adj['value']
+        for adj in self.adjustments.get('Saving Throw Proficiency Level', {}).values():
+            skill = self.stat_list[adj['valueId'] - 1] + '-saving-throws'
+            if adj['value'] is not None:
+                profs[skill] = adj['value']
+
+        # proficiency and bonuses
         for name in skills:
             type = None
             if name.endswith('-saving-throws'):
@@ -215,6 +253,8 @@ class Character:
             elif prof == 4:  # expertise
                 skills[name] += proficiency * 2
             skills[name] += bonus
+
+
 
         for name, value in overrides.items():
             skills[name] = value
@@ -476,8 +516,8 @@ if __name__ == '__main__':
     character = Character(id)
     print(character.name)
     # print(character.fighting_styles)
-    # pprint(character.adjustments)
+    pprint(character.adjustments)
     # print('ac:', character.ac)
     # pprint(character.stats)
-    # pprint(character.skills)
-    pprint(character.attacks)
+    pprint(character.skills)
+    # pprint(character.attacks)
