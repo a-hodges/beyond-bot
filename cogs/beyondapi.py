@@ -10,6 +10,9 @@ URL_BASE = "https://www.dndbeyond.com"
 CHARACTER_URL = URL_BASE + "/character/{id}/json"
 CONFIG_URL = URL_BASE + "/api/config/json"
 
+ROLL_EXPR = re.compile(r'\s*(.+?)\s*:\s*(.+)')
+ATTACK_EXPR = re.compile(r'\s*(.+?)\s*:\s*([+-]?\d+)\s*,\s*([^,]+)\s*,\s*([^,]+)')
+
 
 def slug(text):
     return text.lower().replace(' ', '-')
@@ -443,15 +446,12 @@ class Character:
 
     # ----#-   Custom getters
 
-    roll_expr = re.compile(r'\s*(.+?)\s*:\s*(.+)')
-    attack_expr = re.compile(r'\s*(.+?)\s*:\s*([+-]?\d+)\s*,\s*([^,]+)\s*,\s*([^,]+)')
-
     def custom_attacks(self):
         notes = self.json['notes']['otherNotes']
         notes = notes.split('\n')
         attacks = []
         for line in notes:
-            m = self.attack_expr.match(line)
+            m = ATTACK_EXPR.match(line)
             if m is not None:
                 name, attackBonus, damage, damageType = m.groups()
                 attacks.append({
@@ -473,8 +473,8 @@ class Character:
         notes = notes.split('\n')
         skills = {}
         for line in notes:
-            rm = self.roll_expr.match(line)
-            am = self.attack_expr.match(line)
+            rm = ROLL_EXPR.match(line)
+            am = ATTACK_EXPR.match(line)
             if am is None and rm is not None:
                 name, expr = rm.groups()
                 skills[name.lower()] = expr
@@ -514,8 +514,8 @@ if __name__ == '__main__':
     character = Character(id)
     print(character.name)
     # print(character.fighting_styles)
-    pprint(character.adjustments)
+    # pprint(character.adjustments)
     # print('ac:', character.ac)
     # pprint(character.stats)
-    pprint(character.skills)
+    # pprint(character.skills)
     # pprint(character.attacks)
