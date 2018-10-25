@@ -254,8 +254,6 @@ class Character:
                 skills[name] += proficiency * 2
             skills[name] += bonus
 
-
-
         for name, value in overrides.items():
             skills[name] = value
 
