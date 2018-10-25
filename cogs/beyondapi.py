@@ -308,8 +308,10 @@ class Character:
         elif atkType == 'item':
             itemdef = atkIn['definition']
             weirdBonuses = self.get_specific_item_bonuses(atkIn['id'])
-            magicBonus = sum(
-                m['value'] for m in itemdef['grantedModifiers'] if m['type'] == 'bonus' and m['subType'] == 'magic')  # ???
+            magicBonus = 0
+            for m in itemdef['grantedModifiers']:
+                if m['type'] == 'bonus' and m['subType'] == 'magic':
+                    magicBonus += m['value']
             toHitBonus = magicBonus + weirdBonuses['attackBonus']
             if self.get_prof(itemdef['type']) or weirdBonuses['isPact']:
                 toHitBonus += prof
@@ -329,7 +331,7 @@ class Character:
                     toHitBonus += 2
             if 'Dueling' in self.fighting_styles:
                 if itemdef['attackType'] == 1 and 'Two-Handed' not in properties:
-                    dmgBonus += 2
+                    damageBonus += 2
             if 'Two-Weapon Fighting' not in self.fighting_styles:
                 dual_wield = self.adjustments.get('Dual Wield')
                 if dual_wield:
@@ -347,7 +349,7 @@ class Character:
                 out.append(
                     {
                         'attackBonus': attackBonus,
-                        'damage': f"{diceCount}d{versDie}+{dmgBonus}",
+                        'damage': f"{diceCount}d{versDie}+{damageBonus}",
                         'damageType': damageType,
                         'name': f"{name}2h",
                     }

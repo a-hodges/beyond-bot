@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 import discord
 from discord.ext import commands
 

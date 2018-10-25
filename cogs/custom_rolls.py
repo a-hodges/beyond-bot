@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 import discord
 from discord.ext import commands
 
@@ -28,7 +26,7 @@ class CustomRollCategory (util.Cog):
         embed = discord.Embed(color=character.color())
         embed.set_author(**character.embed_author())
         text = []
-        result = await rolls.do_roll(roll, advantage=ctx.advantage, output=text)
+        await rolls.do_roll(roll, advantage=ctx.advantage, output=text)
         embed.add_field(name=name, value='\n'.join(text), inline=False)
         await ctx.send(embed=embed)
 
