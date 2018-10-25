@@ -35,7 +35,7 @@ class CharacterCategory (util.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(ignore_extra=False)
-    async def whois(self, ctx, user: discord.Member):
+    async def whois(self, ctx, *, user: discord.Member):
         try:
             character = util.get_character(ctx, user.id)
         except LookupError:
@@ -49,7 +49,7 @@ class CharacterCategory (util.Cog):
 
     @commands.command(ignore_extra=False)
     async def whoami(self, ctx):
-        await ctx.invoke(self.whois, ctx.author)
+        await ctx.invoke(self.whois, user=ctx.author)
 
     @commands.command(ignore_extra=False)
     async def unclaim(self, ctx):
