@@ -306,22 +306,21 @@ class Character:
 
     def get_specific_item_bonuses(self, itemId):
         out = {
-            'attackBonus': 0,
-            'attackBonusOverride': 0,
-            'damage': 0,
-            'isPact': False
+            'Fixed Value Bonus': 0,
+            'Fixed Value Override': None,
+            'Is Hexblade': False,
+            'Is Pact Weapon': False,
+            # 'Is Proficient': None,
+            'Name Override': None,
+            'To Hit Bonus': 0,
+            'To Hit Override': None,
+            # 'Weapon Proficiency Level': None,
+            'Dual Wield': False,
         }
-        for val in self.json['characterValues']:
-            if val['valueId'] != itemId:
-                pass
-            elif val['typeId'] == 10:  # damage bonus
-                out['damage'] += val['value']
-            elif val['typeId'] == 12:  # to hit bonus
-                out['attackBonus'] += val['value']
-            elif val['typeId'] == 13:  # to hit override
-                out['attackBonusOverride'] = max(val['value'], out['attackBonusOverride'])
-            elif val['typeId'] == 28:  # pact weapon
-                out['isPact'] = True
+        adj = self.adjustments
+        for key in out:
+            if key in adj and itemId in adj[key] and 'value' in adj[key][itemId]:
+                out[key] = adj[key][itemId]['value'] or out[key]
         return out
 
     def get_attack(self, atkIn, atkType):
@@ -349,37 +348,46 @@ class Character:
         elif atkType == 'item':
             itemdef = atkIn['definition']
             weirdBonuses = self.get_specific_item_bonuses(atkIn['id'])
+            name = weirdBonuses['Name Override'] or itemdef['name']
+            # get attack modifier stat
+            if weirdBonuses['Is Hexblade']:
+                attackMod = self.get_mod('charisma')
+            else:
+                attackMod = self.get_relevant_atkmod(itemdef)
+            # +n magic modifier
             magicBonus = 0
             for m in itemdef['grantedModifiers']:
                 if m['type'] == 'bonus' and m['subType'] == 'magic':
                     magicBonus += m['value']
-            toHitBonus = magicBonus + weirdBonuses['attackBonus']
-            if self.get_prof(itemdef['type']) or weirdBonuses['isPact']:
-                toHitBonus += prof
-            attackBonus = weirdBonuses['attackBonusOverride'] or self.get_relevant_atkmod(itemdef) + toHitBonus
+            # to hit bonus
+            attackBonus = attackMod + magicBonus + weirdBonuses['To Hit Bonus']
+            if self.get_prof(itemdef['type']) or weirdBonuses['Is Pact Weapon']:
+                attackBonus += prof
+            if weirdBonuses['To Hit Override']:
+                attackBonus = weirdBonuses['To Hit Override']
+            # damage
+            damage = None
             diceCount = itemdef['damage']['diceCount']
             diceType = itemdef['damage']['diceValue']
-            damageBonus = self.get_relevant_atkmod(itemdef) + magicBonus + weirdBonuses['damage']
-            damage = None
+            damageBonus = attackMod + magicBonus + weirdBonuses['Fixed Value Bonus']
+            if weirdBonuses['Fixed Value Override']:
+                damageBonus = weirdBonuses['Fixed Value Override']
+            # damage type
             damageType = itemdef['damageType'].lower()
-            if itemdef['magic'] or weirdBonuses['isPact']:
+            if itemdef['magic'] or weirdBonuses['Is Pact Weapon']:
                 damageType += '^'
-            name = itemdef['name']
-
+            # fighting styles
             properties = {p['name']: p for p in itemdef['properties']}
             if 'Archery' in self.fighting_styles:
                 if itemdef['attackType'] == 2:
-                    toHitBonus += 2
+                    attackBonus += 2
             if 'Dueling' in self.fighting_styles:
                 if itemdef['attackType'] == 1 and 'Two-Handed' not in properties:
                     damageBonus += 2
             if 'Two-Weapon Fighting' not in self.fighting_styles:
-                dual_wield = self.adjustments.get('Dual Wield')
-                if dual_wield:
-                    dual_wield = dual_wield.get(atkIn['id'])
-                    if dual_wield and dual_wield.get('value'):
-                        damageBonus -= self.get_relevant_atkmod(itemdef)
-
+                if weirdBonuses['Dual Wield']:
+                    damageBonus -= attackMod
+            # versatile weapons
             if 'Versatile' in properties:
                 vers = properties['Versatile']['notes']
                 _, _, versDie = vers.partition('d')
