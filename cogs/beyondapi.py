@@ -53,17 +53,17 @@ class Character:
             self.weapons[name] = []
         for weapon in config['weapons']:
             self.weapons[self.weapon_categories[weapon['categoryId']]].append(slug(weapon['name']))
-    
+
     @property
     def adjustments(self):
         if hasattr(self, '_adjustments'):
             return self._adjustments
-        
+
         adjustments = defaultdict(dict)
         for value in self.json['characterValues']:
             type = self.adjustment_types[value['typeId']]
             adjustments[type['name']][value['valueId']] = value
-        
+
         self._adjustments = dict(adjustments)
         return self._adjustments
 
@@ -229,13 +229,13 @@ class Character:
     def fighting_styles(self):
         if hasattr(self, '_fighting_styles'):
             return self._fighting_styles
-        
+
         fighting_styles = set()
         for value in self.json['options']['class']:
             name = value['definition']['name']
             if name in ['Archery', 'Dueling', 'Two-Weapon Fighting']:
                 fighting_styles.add(name)
-        
+
         self._fighting_styles = fighting_styles
         return fighting_styles
 
@@ -285,13 +285,12 @@ class Character:
 
     def get_attack(self, atkIn, atkType):
         """Calculates and returns a list of dicts."""
-        stats = self.stats
-        prof = stats['prof']
+        prof = self.stats['prof']
         out = []
         if atkType == 'action':
             attackBonus = None
             damage = f"{atkIn['dice']['diceString']}"
-            damageType = self.damage_types.get(atkIn['damageTypeId'], 'damage')
+            damageType = self.damage_types.get(atkIn['damageTypeId'])
             name = atkIn['name']
         elif atkType == 'customAction':
             attackBonus = None
@@ -304,7 +303,7 @@ class Character:
             diceCount = atkIn['diceCount']
             diceType = atkIn['diceType']
             damage = None
-            damageType = self.damage_types.get(atkIn['damageTypeId'], 'damage')
+            damageType = self.damage_types.get(atkIn['damageTypeId'])
             name = atkIn['name']
         elif atkType == 'item':
             itemdef = atkIn['definition']
@@ -319,10 +318,11 @@ class Character:
             diceType = itemdef['damage']['diceValue']
             damageBonus = self.get_relevant_atkmod(itemdef) + magicBonus + weirdBonuses['damage']
             damage = None
-            damageType = (itemdef['damageType'].lower() +
-                ('^' if itemdef['magic'] or weirdBonuses['isPact'] else ''))
+            damageType = itemdef['damageType'].lower()
+            if itemdef['magic'] or weirdBonuses['isPact']:
+                damageType += '^'
             name = itemdef['name']
-            
+
             properties = {p['name']: p for p in itemdef['properties']}
             if 'Archery' in self.fighting_styles:
                 if itemdef['attackType'] == 2:
@@ -354,7 +354,7 @@ class Character:
                 )
         else:
             return None
-        
+
         if name is None:
             return None
         if attackBonus is not None:
@@ -363,8 +363,6 @@ class Character:
             damage = f"{diceCount}d{diceType}"
             if damageBonus:
                 damage += f"{damageBonus:+d}"
-        if damageType == 'damage':
-            damageType = None
 
         out.insert(0, {
             'name': name,
@@ -416,7 +414,12 @@ class Character:
             m = self.attack_expr.match(line)
             if m is not None:
                 name, attackBonus, damage, damageType = m.groups()
-                attacks.append({'name': name, 'attackBonus': int(attackBonus), 'damage': damage, 'damageType': damageType})
+                attacks.append({
+                    'name': name,
+                    'attackBonus': int(attackBonus),
+                    'damage': damage,
+                    'damageType': damageType
+                })
         return attacks
 
     def all_attacks(self):

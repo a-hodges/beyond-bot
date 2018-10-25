@@ -39,7 +39,7 @@ class AttackCategory (util.Cog):
             text = []
             result = await rolls.do_roll(attack['damage'], output=text)
             embed.add_field(name='damage roll', value='\n'.join(text), inline=True)
-            if attack['damageType'] is None or attack['damageType'] == 'damage':
+            if attack['damageType'] is None:
                 embed.set_footer(text=f'{result} damage')
             else:
                 embed.set_footer(text=f"{result} {attack['damageType']} damage")
