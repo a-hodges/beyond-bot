@@ -423,6 +423,38 @@ class Character:
         })
 
         return out
+    
+    def get_spell_attack(self, atkIn, ability):
+        # ... add magic bonuses
+        for mod in atkIn['modifiers']:
+            if mod['type'] == 'damage':
+                break
+            else:
+                mod, damage, damageType = None, None, None
+        if mod is not None:
+            damageData = mod['die']
+            damageType = mod['subType']
+            if mod['atHigherLevels']:
+                scaling = mod['atHigherLevels']
+                if scaling['scaleType'] == 'characterlevel':
+                    level = self.levels['character']
+                    for scale in scaling['points']:
+                        if scale['level'] <= level:
+                            damageData = scale['die']
+            damage = damageData['diceString']
+            if damageData['fixedValue']:
+                damage = f"{damage}{damageData['fixedValue']:+d}"
+        if atkIn['requiresAttackRoll']:
+            attackBonus = self.get_mod(ability) + self.stats['prof']
+        else:
+            attackBonus = None
+        out = {
+            'attackBonus': attackBonus,
+            'damage': damage,
+            'damageType': damageType,
+            'name': atkIn['name'],
+        }
+        return out
 
     @property
     def attacks(self):
@@ -450,6 +482,18 @@ class Character:
         for item in self.json['inventory']:
             if item['equipped'] and (item['definition']['filterType'] == "Weapon" or item.get('displayAsAttack')):
                 extend(self.get_attack(item, "item"))
+        # spells
+        for spells in self.json['spells'].values():
+            for spell in spells:
+                daa = self.adjustments.get('Display As Attack', {}).get(spell['id'], {}).get('value')
+                if spell['displayAsAttack'] if daa is None else daa:
+                    extend([self.get_spell_attack(spell['definition'], spell['spellCastingAbilityId'])])
+        for spells in self.json['classSpells']:
+            for spell in spells['spells']:
+                daa = self.adjustments.get('Display As Attack', {}).get(spell['id'], {}).get('value')
+                if spell['displayAsAttack'] if daa is None else daa:
+                    # pprint(spell)
+                    ...
         return attacks
 
     # ----#-   Custom getters
