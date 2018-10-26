@@ -94,6 +94,18 @@ class Character:
         if setval is not None:
             return max(base, setval)
         return base
+    
+    @property
+    def classes(self):
+        if hasattr(self, '_classes'):
+            return self._classes
+        
+        classes = {}
+        for c in self.json['classes']:
+            classes[c['id']] = c
+        
+        self._classes = classes
+        return classes
 
     @property
     def stats(self):
@@ -280,8 +292,6 @@ class Character:
         self._fighting_styles = fighting_styles
         return fighting_styles
 
-    # ----#-   Avrae
-
     def get_prof(self, proftype):
         if not hasattr(self, 'profs'):
             p = []
@@ -323,109 +333,113 @@ class Character:
                 out[key] = adj[key][itemId]['value'] or out[key]
         return out
 
-    def get_attack(self, atkIn, atkType):
-        """Calculates and returns a list of dicts."""
-        prof = self.stats['prof']
-        out = []
-        if atkType == 'action':
-            attackBonus = None
-            damage = f"{atkIn['dice']['diceString']}"
-            damageType = self.damage_types.get(atkIn['damageTypeId'])
-            name = atkIn['name']
-        elif atkType == 'customAction':
-            attackBonus = None
-            damageBonus = (atkIn['fixedValue'] or 0) + (atkIn['damageBonus'] or 0)
-            if atkIn['statId'] and atkIn['rangeId']:
-                attackBonus = self.get_mod(atkIn['statId']) + (atkIn['toHitBonus'] or 0)
-                if atkIn['isProficient']:
-                    attackBonus += prof
-                damageBonus = (atkIn['fixedValue'] or 0) + self.get_mod(atkIn['statId']) + (atkIn['damageBonus'] or 0)
-            diceCount = atkIn['diceCount']
-            diceType = atkIn['diceType']
-            damage = None
-            damageType = self.damage_types.get(atkIn['damageTypeId'])
-            name = atkIn['name']
-        elif atkType == 'item':
-            itemdef = atkIn['definition']
-            weirdBonuses = self.get_specific_item_bonuses(atkIn['id'])
-            name = weirdBonuses['Name Override'] or itemdef['name']
-            # get attack modifier stat
-            if weirdBonuses['Is Hexblade']:
-                attackMod = self.get_mod('charisma')
-            else:
-                attackMod = self.get_relevant_atkmod(itemdef)
-            # +n magic modifier
-            magicBonus = 0
-            for m in itemdef['grantedModifiers']:
-                if m['type'] == 'bonus' and m['subType'] == 'magic':
-                    magicBonus += m['value']
-            # to hit bonus
-            attackBonus = attackMod + magicBonus + weirdBonuses['To Hit Bonus']
-            if self.get_prof(itemdef['type']) or weirdBonuses['Is Pact Weapon']:
-                attackBonus += prof
-            if weirdBonuses['To Hit Override']:
-                attackBonus = weirdBonuses['To Hit Override']
-            # damage
-            damage = None
-            diceCount = itemdef['damage']['diceCount']
-            diceType = itemdef['damage']['diceValue']
-            damageBonus = attackMod + magicBonus + weirdBonuses['Fixed Value Bonus']
-            if weirdBonuses['Fixed Value Override']:
-                damageBonus = weirdBonuses['Fixed Value Override']
-            # damage type
-            damageType = itemdef['damageType'].lower()
-            if itemdef['magic'] or weirdBonuses['Is Pact Weapon']:
-                damageType += '^'
-            # fighting styles
-            properties = {p['name']: p for p in itemdef['properties']}
-            if 'Archery' in self.fighting_styles:
-                if itemdef['attackType'] == 2:
-                    attackBonus += 2
-            if 'Dueling' in self.fighting_styles:
-                if itemdef['attackType'] == 1 and 'Two-Handed' not in properties:
-                    damageBonus += 2
-            if 'Two-Weapon Fighting' not in self.fighting_styles:
-                if weirdBonuses['Dual Wield']:
-                    damageBonus -= attackMod
-            # versatile weapons
-            if 'Versatile' in properties:
-                vers = properties['Versatile']['notes']
-                _, _, versDie = vers.partition('d')
-                if versDie:
-                    versDie = int(versDie)
-                else:
-                    raise ValueError(f'Invalid Versatile die: {vers}')
-                out.append(
-                    {
-                        'attackBonus': attackBonus,
-                        'damage': f"{diceCount}d{versDie}+{damageBonus}",
-                        'damageType': damageType,
-                        'name': f"{name}2h",
-                    }
-                )
-        else:
-            return None
+    def get_attack(self, atkIn):
+        return {
+            'name': atkIn['name'],
+            'attackBonus': None,
+            'damage': f"{atkIn['dice']['diceString']}",
+            'damageType': self.damage_types.get(atkIn['damageTypeId']),
+        }
+    
+    def get_custom_attack(self, atkIn):
+        name = atkIn['name']
+        attackBonus = None
+        damageBonus = (atkIn['fixedValue'] or 0) + (atkIn['damageBonus'] or 0)
+        if atkIn['statId'] and atkIn['rangeId']:
+            attackBonus = self.get_mod(atkIn['statId']) + (atkIn['toHitBonus'] or 0)
+            if atkIn['isProficient']:
+                attackBonus += self.stats['prof']
+            damageBonus = (atkIn['fixedValue'] or 0) + self.get_mod(atkIn['statId']) + (atkIn['damageBonus'] or 0)
+        diceCount = atkIn['diceCount']
+        diceType = atkIn['diceType']
+        damageType = self.damage_types.get(atkIn['damageTypeId'])
+        
+        damage = f"{diceCount}d{diceType}"
+        if damageBonus:
+            damage += f"{damageBonus:+d}"
 
-        if name is None:
-            return None
-        if attackBonus is not None:
-            attackBonus = int(attackBonus)
-        if damage is None:
-            damage = f"{diceCount}d{diceType}"
-            if damageBonus:
-                damage += f"{damageBonus:+d}"
-
-        out.insert(0, {
+        return {
             'name': name,
             'attackBonus': attackBonus,
             'damage': damage,
             'damageType': damageType,
-        })
+        }
+    
+    def get_weapon_attack(self, atkIn):
+        prof = self.stats['prof']
+        itemdef = atkIn['definition']
+        weirdBonuses = self.get_specific_item_bonuses(atkIn['id'])
+        name = weirdBonuses['Name Override'] or itemdef['name']
+        # get attack modifier stat
+        if weirdBonuses['Is Hexblade']:
+            attackMod = self.get_mod('charisma')
+        else:
+            attackMod = self.get_relevant_atkmod(itemdef)
+        # +n magic modifier
+        magicBonus = 0
+        for m in itemdef['grantedModifiers']:
+            if m['type'] == 'bonus' and m['subType'] == 'magic':
+                magicBonus += m['value']
+        # to hit bonus
+        attackBonus = attackMod + magicBonus + weirdBonuses['To Hit Bonus']
+        if self.get_prof(itemdef['type']) or weirdBonuses['Is Pact Weapon']:
+            attackBonus += prof
+        if weirdBonuses['To Hit Override']:
+            attackBonus = weirdBonuses['To Hit Override']
+        # damage
+        diceCount = itemdef['damage']['diceCount']
+        diceType = itemdef['damage']['diceValue']
+        damageBonus = attackMod + magicBonus + weirdBonuses['Fixed Value Bonus']
+        if weirdBonuses['Fixed Value Override']:
+            damageBonus = weirdBonuses['Fixed Value Override']
+        # damage type
+        damageType = itemdef['damageType'].lower()
+        if itemdef['magic'] or weirdBonuses['Is Pact Weapon']:
+            damageType += '^'
+        # fighting styles
+        properties = {p['name']: p for p in itemdef['properties']}
+        if 'Archery' in self.fighting_styles:
+            if itemdef['attackType'] == 2:
+                attackBonus += 2
+        if 'Dueling' in self.fighting_styles:
+            if itemdef['attackType'] == 1 and 'Two-Handed' not in properties:
+                damageBonus += 2
+        if 'Two-Weapon Fighting' not in self.fighting_styles:
+            if weirdBonuses['Dual Wield']:
+                damageBonus -= attackMod
+        
+        damage = f"{diceCount}d{diceType}"
+        if damageBonus:
+            damage += f"{damageBonus:+d}"
+
+        out = [{
+            'name': name,
+            'attackBonus': attackBonus,
+            'damage': damage,
+            'damageType': damageType,
+        }]
+        
+        # versatile weapons
+        if 'Versatile' in properties:
+            vers = properties['Versatile']['notes']
+            _, _, versDie = vers.partition('d')
+            if versDie:
+                versDie = int(versDie)
+            else:
+                raise ValueError(f'Invalid Versatile die: {vers}')
+            out.append(
+                {
+                    'attackBonus': attackBonus,
+                    'damage': f"{diceCount}d{versDie}+{damageBonus}",
+                    'damageType': damageType,
+                    'name': f"{name}2h",
+                }
+            )
 
         return out
     
     def get_spell_attack(self, atkIn, ability):
-        # ... add magic bonuses
+        # ... add saving throws
         for mod in atkIn['modifiers']:
             if mod['type'] == 'damage':
                 break
@@ -446,6 +460,7 @@ class Character:
                 damage = f"{damage}{damageData['fixedValue']:+d}"
         if atkIn['requiresAttackRoll']:
             attackBonus = self.get_mod(ability) + self.stats['prof']
+            attackBonus = self.get_value('spell-attacks', attackBonus)
         else:
             attackBonus = None
         out = {
@@ -475,13 +490,13 @@ class Character:
         for src in self.json['actions'].values():
             for action in src:
                 if action['displayAsAttack']:
-                    extend(self.get_attack(action, "action"))
+                    extend(self.get_attack(action))
         for action in self.json['customActions']:
             # if action['displayAsAttack'] != False:
-                extend(self.get_attack(action, "customAction"))
+                extend(self.get_custom_attack(action))
         for item in self.json['inventory']:
             if item['equipped'] and (item['definition']['filterType'] == "Weapon" or item.get('displayAsAttack')):
-                extend(self.get_attack(item, "item"))
+                extend(self.get_weapon_attack(item))
         # spells
         for spells in self.json['spells'].values():
             for spell in spells:
@@ -492,8 +507,8 @@ class Character:
             for spell in spells['spells']:
                 daa = self.adjustments.get('Display As Attack', {}).get(spell['id'], {}).get('value')
                 if spell['displayAsAttack'] if daa is None else daa:
-                    # pprint(spell)
-                    ...
+                    stat = self.classes[spells['characterClassId']]['definition']['spellCastingAbilityId']
+                    extend([self.get_spell_attack(spell['definition'], stat)])
         return attacks
 
     # ----#-   Custom getters
@@ -565,6 +580,7 @@ if __name__ == '__main__':
     id = sys.argv[1]
     character = Character(id)
     print(character.name)
+    # pprint(character.classes, depth=3)
     # print(character.fighting_styles)
     # pprint(character.adjustments)
     # print('ac:', character.ac)
