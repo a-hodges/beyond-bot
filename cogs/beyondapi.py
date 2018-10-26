@@ -62,15 +62,12 @@ class Character:
 
     @property
     def adjustments(self):
-        if hasattr(self, '_adjustments'):
-            return self._adjustments
-
-        adjustments = defaultdict(dict)
-        for value in self.json['characterValues']:
-            type = self.adjustment_types[value['typeId']]
-            adjustments[type['name']][value['valueId']] = value
-
-        self._adjustments = dict(adjustments)
+        if not hasattr(self, '_adjustments'):
+            adjustments = defaultdict(dict)
+            for value in self.json['characterValues']:
+                type = self.adjustment_types[value['typeId']]
+                adjustments[type['name']][value['valueId']] = value
+            self._adjustments = dict(adjustments)
         return self._adjustments
 
     @property
@@ -94,18 +91,12 @@ class Character:
         if setval is not None:
             return max(base, setval)
         return base
-    
+
     @property
     def classes(self):
-        if hasattr(self, '_classes'):
-            return self._classes
-        
-        classes = {}
-        for c in self.json['classes']:
-            classes[c['id']] = c
-        
-        self._classes = classes
-        return classes
+        if not hasattr(self, '_classes'):
+            self._classes = {c['id']: c for c in self.json['classes']}
+        return self._classes
 
     @property
     def stats(self):
@@ -143,21 +134,19 @@ class Character:
 
     @property
     def levels(self):
-        if hasattr(self, '_levels'):
-            return self._levels
-
-        levels = {}
-
-        for c in self.json['classes']:
-            levels[c['definition']['name'].lower()] = c['level']
-
-        levels['character'] = sum(levels.values())
-
-        self._levels = levels
-        return levels
+        if not hasattr(self, '_levels'):
+            levels = {}
+            for c in self.json['classes']:
+                levels[c['definition']['name'].lower()] = c['level']
+            levels['character'] = sum(levels.values())
+            self._levels = levels
+        return self._levels
 
     @property
     def ac(self):
+        if hasattr(self, '_ac'):
+            return self._ac
+
         ac = 10
         armortype = None
 
@@ -175,6 +164,7 @@ class Character:
         elif armortype == 'Medium Armor':
             ac += min(self.stats['dexmod'], 2)
 
+        self._ac = ac
         return ac
 
     @property
@@ -280,17 +270,14 @@ class Character:
 
     @property
     def fighting_styles(self):
-        if hasattr(self, '_fighting_styles'):
-            return self._fighting_styles
-
-        fighting_styles = set()
-        for value in self.json['options']['class']:
-            name = value['definition']['name']
-            if name in ['Archery', 'Dueling', 'Two-Weapon Fighting']:
-                fighting_styles.add(name)
-
-        self._fighting_styles = fighting_styles
-        return fighting_styles
+        if not hasattr(self, '_fighting_styles'):
+            fighting_styles = set()
+            for value in self.json['options']['class']:
+                name = value['definition']['name']
+                if name in ['Archery', 'Dueling', 'Two-Weapon Fighting']:
+                    fighting_styles.add(name)
+            self._fighting_styles = fighting_styles
+        return self._fighting_styles
 
     def get_prof(self, proftype):
         if not hasattr(self, 'profs'):
@@ -340,7 +327,7 @@ class Character:
             'damage': f"{atkIn['dice']['diceString']}",
             'damageType': self.damage_types.get(atkIn['damageTypeId']),
         }
-    
+
     def get_custom_attack(self, atkIn):
         name = atkIn['name']
         attackBonus = None
@@ -353,7 +340,7 @@ class Character:
         diceCount = atkIn['diceCount']
         diceType = atkIn['diceType']
         damageType = self.damage_types.get(atkIn['damageTypeId'])
-        
+
         damage = f"{diceCount}d{diceType}"
         if damageBonus:
             damage += f"{damageBonus:+d}"
@@ -364,7 +351,7 @@ class Character:
             'damage': damage,
             'damageType': damageType,
         }
-    
+
     def get_weapon_attack(self, atkIn):
         prof = self.stats['prof']
         itemdef = atkIn['definition']
@@ -407,7 +394,7 @@ class Character:
         if 'Two-Weapon Fighting' not in self.fighting_styles:
             if weirdBonuses['Dual Wield']:
                 damageBonus -= attackMod
-        
+
         damage = f"{diceCount}d{diceType}"
         if damageBonus:
             damage += f"{damageBonus:+d}"
@@ -418,7 +405,7 @@ class Character:
             'damage': damage,
             'damageType': damageType,
         }]
-        
+
         # versatile weapons
         if 'Versatile' in properties:
             vers = properties['Versatile']['notes']
@@ -437,7 +424,7 @@ class Character:
             )
 
         return out
-    
+
     def get_spell_attack(self, atkIn, ability):
         # ... add saving throws
         for mod in atkIn['modifiers']:
@@ -460,7 +447,7 @@ class Character:
                 damage = f"{damage}{damageData['fixedValue']:+d}"
         if atkIn['requiresAttackRoll']:
             attackBonus = self.get_mod(ability) + self.stats['prof']
-            attackBonus = self.get_value('spell-attacks', attackBonus)
+            attackBonus = self.get_value('spell-attacks', base=attackBonus)
         else:
             attackBonus = None
         out = {
@@ -580,10 +567,11 @@ if __name__ == '__main__':
     id = sys.argv[1]
     character = Character(id)
     print(character.name)
+    # print('ac:', character.ac)
+    # print(character.levels)
     # pprint(character.classes, depth=3)
     # print(character.fighting_styles)
     # pprint(character.adjustments)
-    # print('ac:', character.ac)
     # pprint(character.stats)
     # pprint(character.skills)
     # pprint(character.attacks)
