@@ -9,7 +9,7 @@ import equations
 from . import util
 
 
-async def do_roll(expression, advantage=None, output=[]):
+def do_roll(expression, advantage=None, output=[]):
     '''
     Rolls dice
     '''
@@ -159,7 +159,7 @@ class RollCategory (util.Cog):
             ctx.advantage = 0
 
         output = []
-        await do_roll(expression, advantage=ctx.advantage, output=output)
+        do_roll(expression, advantage=ctx.advantage, output=output)
         embed = discord.Embed(description='\n'.join(output))
         await ctx.send(embed=embed)
 
