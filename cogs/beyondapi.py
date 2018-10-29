@@ -479,10 +479,10 @@ class Character:
         for src in self.json['actions'].values():
             for action in src:
                 if action['displayAsAttack']:
-                    extend(self.get_attack(action))
+                    extend([self.get_attack(action)])
         for action in self.json['customActions']:
             # if action['displayAsAttack'] != False:
-                extend(self.get_custom_attack(action))
+                extend([self.get_custom_attack(action)])
         for item in self.json['inventory']:
             if item['equipped'] and (item['definition']['filterType'] == "Weapon" or item.get('displayAsAttack')):
                 extend(self.get_weapon_attack(item))

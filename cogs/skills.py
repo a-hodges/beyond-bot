@@ -26,7 +26,7 @@ class SkillCategory (util.Cog):
         embed = discord.Embed(color=character.color())
         embed.set_author(**character.embed_author())
         text = []
-        await rolls.do_roll(f"1d20+{skill}", advantage=ctx.advantage, output=text)
+        rolls.do_roll(f"1d20+{skill}", advantage=ctx.advantage, output=text)
         embed.add_field(name=name, value='\n'.join(text), inline=False)
         await ctx.send(embed=embed)
 

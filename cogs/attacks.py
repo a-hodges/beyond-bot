@@ -31,11 +31,11 @@ class AttackCategory (util.Cog):
         embed.set_author(**character.embed_author())
         if attack['attackBonus'] is not None:
             text = []
-            result = await rolls.do_roll(f"1d20+{attack['attackBonus']}", advantage=ctx.advantage, output=text)
+            result = rolls.do_roll(f"1d20+{attack['attackBonus']}", advantage=ctx.advantage, output=text)
             embed.add_field(name='attack roll', value='\n'.join(text), inline=True)
         if attack['damage'] is not None:
             text = []
-            result = await rolls.do_roll(attack['damage'], output=text)
+            result = rolls.do_roll(attack['damage'], output=text)
             embed.add_field(name='damage roll', value='\n'.join(text), inline=True)
             if attack['damageType'] is None:
                 embed.set_footer(text=f'{result} damage')
