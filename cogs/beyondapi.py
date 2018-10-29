@@ -443,8 +443,11 @@ class Character:
                         if scale['level'] <= level:
                             damageData = scale['die']
             damage = damageData['diceString']
-            if damageData['fixedValue']:
-                damage = f"{damage}{damageData['fixedValue']:+d}"
+            damageBonus = damageData['fixedValue'] or 0
+            if mod['usePrimaryStat']:
+                damageBonus += self.get_mod(ability)
+            if damageBonus:
+                damage += f"{damageBonus:+d}"
         if atkIn['requiresAttackRoll']:
             attackBonus = self.get_mod(ability) + self.stats['prof']
             attackBonus = self.get_value('spell-attacks', base=attackBonus)
