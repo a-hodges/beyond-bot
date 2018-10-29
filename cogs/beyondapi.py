@@ -11,7 +11,6 @@ CHARACTER_URL = URL_BASE + "/character/{id}/json"
 CONFIG_URL = URL_BASE + "/api/config/json"
 
 ROLL_EXPR = re.compile(r'\s*(.+?)\s*:\s*(.+)')
-ATTACK_EXPR = re.compile(r'\s*(.+?)\s*:\s*([+-]?\d+)\s*,\s*([^,]+)\s*,\s*([^,]+)')
 
 
 def slug(text):
@@ -503,37 +502,14 @@ class Character:
 
     # ----#-   Custom getters
 
-    def custom_attacks(self):
-        notes = self.json['notes']['otherNotes']
-        notes = notes.split('\n')
-        attacks = []
-        for line in notes:
-            m = ATTACK_EXPR.match(line)
-            if m is not None:
-                name, attackBonus, damage, damageType = m.groups()
-                attacks.append({
-                    'name': name,
-                    'attackBonus': int(attackBonus),
-                    'damage': damage,
-                    'damageType': damageType
-                })
-        return attacks
-
-    def all_attacks(self):
-        attacks = self.custom_attacks()
-        names = set(a['name'].lower() for a in attacks)
-        attacks.extend(filter(lambda a: a['name'].lower() not in names, self.attacks))
-        return attacks
-
     def custom_rolls(self):
         notes = self.json['notes']['otherNotes']
         notes = notes.split('\n')
         skills = {}
         for line in notes:
-            rm = ROLL_EXPR.match(line)
-            am = ATTACK_EXPR.match(line)
-            if am is None and rm is not None:
-                name, expr = rm.groups()
+            m = ROLL_EXPR.match(line)
+            if m is not None:
+                name, expr = m.groups()
                 skills[name.lower()] = expr
         return skills
 

@@ -15,7 +15,7 @@ class AttackCategory (util.Cog):
 
         character = util.get_character(ctx, ctx.author.id)
         attack = None
-        for a in character.all_attacks():
+        for a in character.attacks:
             if a['name'].lower() == name.lower():
                 attack = a
                 break
