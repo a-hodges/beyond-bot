@@ -3,6 +3,8 @@ from discord.ext import commands
 from . import beyondapi as api
 from . import model as m
 
+delete_emoji = '❌'
+
 
 class BotError (Exception):
     pass

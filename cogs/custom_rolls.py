@@ -44,9 +44,11 @@ class CustomRollCategory (util.Cog):
     async def list(self, ctx):
         character = util.get_character(ctx, ctx.author.id)
         rolls = map("{0[0]}: {0[1]}".format, character.custom_rolls().items())
-        embed = discord.Embed(description='\n'.join(rolls), color=character.color())
+        embed = discord.Embed(title='Custom Rolls', description='\n'.join(rolls), color=character.color())
         embed.set_author(**character.embed_author())
-        await ctx.send(embed=embed)
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction(util.delete_emoji)
+        await ctx.message.delete()
 
 
 def setup(bot):

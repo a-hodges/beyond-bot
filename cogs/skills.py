@@ -44,9 +44,11 @@ class SkillCategory (util.Cog):
     async def list(self, ctx):
         character = util.get_character(ctx, ctx.author.id)
         skills = map("{0[0]}: {0[1]:+d}".format, character.skills.items())
-        embed = discord.Embed(description='\n'.join(skills), color=character.color())
+        embed = discord.Embed(title='Skills', description='\n'.join(skills), color=character.color())
         embed.set_author(**character.embed_author())
-        await ctx.send(embed=embed)
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction(util.delete_emoji)
+        await ctx.message.delete()
 
 
 def setup(bot):

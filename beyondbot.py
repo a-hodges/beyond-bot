@@ -24,6 +24,7 @@ from sqlalchemy.exc import IntegrityError
 from equations import EquationError
 
 from cogs import model as m
+from cogs.util import delete_emoji
 
 
 default_prefix = '/'
@@ -42,7 +43,6 @@ bot = commands.Bot(
     command_prefix=get_prefix,
     description=__doc__,
     loop=asyncio.new_event_loop())
-delete_emoji = '❌'
 
 
 @bot.event
