@@ -125,12 +125,9 @@ class RollCategory (util.Cog):
     async def group(self, ctx, *, expression: str):
         '''
         Rolls dice
-        Note: If a variable name is included in a roll the name will be replaced with the value of the variable
 
         Parameters:
         [expression*] standard dice notation specifying what to roll
-            The expression may include saved rolls, replacing the name with the roll itself
-            Rolls may contain other rolls up to 3 levels deep
 
         Mathematic operations from highest precedence to lowest:
 
@@ -163,7 +160,7 @@ class RollCategory (util.Cog):
 
         output = []
         await do_roll(expression, advantage=ctx.advantage, output=output)
-        embed = discord.Embed(description='\n'.join(output), color=ctx.author.color)
+        embed = discord.Embed(description='\n'.join(output))
         await ctx.send(embed=embed)
 
     @group.command(aliases=['adv'])
