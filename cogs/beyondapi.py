@@ -523,15 +523,22 @@ class Character:
         return r * 256 * 256 + g * 256 + b
 
     def embed_fields(self):
+        overview = (
+            f"**Level:** {self.levels['character']}\n"
+            f"**AC:** {self.ac}\n"
+        )
+        yield {'name': 'Overview', 'value': overview, 'inline': True}
         for c in self.json['classes']:
-            level = c['level']
             name = c['definition']['name']
             if c['subclassDefinition'] is not None:
-                subclass = c['subclassDefinition']['name']
-                yield {'name': f'{subclass} {name}', 'value': level, 'inline': True}
-            else:
-                yield {'name': f'{name}', 'value': level, 'inline': True}
-        yield {'name': f'AC', 'value': self.ac, 'inline': True}
+                name = f"{c['subclassDefinition']['name']} {name}"
+            value = f"**Level:** {c['level']}"
+            yield {'name': f'{name}', 'value': value, 'inline': True}
+        stat_list = [s[:3] for s in self.stat_list]
+        stats = ("**{}:** {} ({:+d})".format(s, self.stats[s], self.get_mod(s)) for s in stat_list)
+        yield {'name': 'Stats', 'value': '\n'.join(stats), 'inline': True}
+        saves = ("**{}:** {:+d}".format(s, self.skills[s + 'save']) for s in stat_list)
+        yield {'name': 'Saving Throws', 'value': '\n'.join(saves), 'inline': True}
 
     def embed_author(self):
         return {

@@ -12,6 +12,16 @@ SHARE_URL = re.compile(r'(?:https://)?ddb\.ac/characters/(\d+)/\w+')
 NUMBER_EXPR = re.compile(r'(\d+)')
 
 
+def make_embed(character):
+    embed = discord.Embed(color=character.color())
+    author = character.embed_author()
+    embed.set_thumbnail(url=author.pop('icon_url'))
+    embed.set_author(**author)
+    for field in character.embed_fields():
+        embed.add_field(**field)
+    return embed
+
+
 class CharacterCategory (util.Cog):
     @commands.command(ignore_extra=False)
     async def iam(self, ctx, id: str):
@@ -30,11 +40,10 @@ class CharacterCategory (util.Cog):
             claim = m.Character(server=ctx.guild.id, user=ctx.author.id, character=id)
             ctx.session.add(claim)
         ctx.session.commit()
-        embed = discord.Embed(color=character.color())
-        embed.set_author(**character.embed_author())
-        for field in character.embed_fields():
-            embed.add_field(**field)
-        await ctx.send(embed=embed)
+        embed = make_embed(character)
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction(util.delete_emoji)
+        await ctx.message.delete()
 
     @commands.command(ignore_extra=False)
     async def whois(self, ctx, *, user: discord.Member):
@@ -43,11 +52,10 @@ class CharacterCategory (util.Cog):
         except LookupError:
             embed = discord.Embed(description='User has no character')
         else:
-            embed = discord.Embed(color=character.color())
-            embed.set_author(**character.embed_author())
-            for field in character.embed_fields():
-                embed.add_field(**field)
-        await ctx.send(embed=embed)
+            embed = make_embed(character)
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction(util.delete_emoji)
+        await ctx.message.delete()
 
     @commands.command(ignore_extra=False)
     async def whoami(self, ctx):
@@ -60,7 +68,9 @@ class CharacterCategory (util.Cog):
             ctx.session.delete(claim)
             ctx.session.commit()
         embed = discord.Embed(description='Done')
-        await ctx.send(embed=embed)
+        msg = await ctx.send(embed=embed)
+        await msg.add_reaction(util.delete_emoji)
+        await ctx.message.delete()
 
 
 def setup(bot):

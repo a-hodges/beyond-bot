@@ -43,7 +43,7 @@ class CustomRollCategory (util.Cog):
     @group.command(ignore_extra=False)
     async def list(self, ctx):
         character = util.get_character(ctx, ctx.author.id)
-        rolls = map("{0[0]}: {0[1]}".format, character.custom_rolls().items())
+        rolls = map("**{0[0]}:** {0[1]}".format, character.custom_rolls().items())
         embed = discord.Embed(title='Custom Rolls', description='\n'.join(rolls), color=character.color())
         embed.set_author(**character.embed_author())
         msg = await ctx.send(embed=embed)

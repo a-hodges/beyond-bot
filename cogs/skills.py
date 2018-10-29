@@ -43,7 +43,7 @@ class SkillCategory (util.Cog):
     @group.command(ignore_extra=False)
     async def list(self, ctx):
         character = util.get_character(ctx, ctx.author.id)
-        skills = map("{0[0]}: {0[1]:+d}".format, character.skills.items())
+        skills = map("**{0[0]}:** {0[1]:+d}".format, character.skills.items())
         embed = discord.Embed(title='Skills', description='\n'.join(skills), color=character.color())
         embed.set_author(**character.embed_author())
         msg = await ctx.send(embed=embed)
