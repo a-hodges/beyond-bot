@@ -59,7 +59,14 @@ class AttackCategory (util.Cog):
     @group.command(ignore_extra=False)
     async def list(self, ctx):
         character = util.get_character(ctx, ctx.author.id)
-        attacks = map("**{0[name]}:** {0[attackBonus]:+d}, {0[damage]}, {0[damageType]}".format, character.attacks)
+        attacks = []
+        for attack in character.attacks:
+            if attack['attackBonus'] is None:
+                attacks.append(f"**{attack['name']}:** None, {attack['damage']}, {attack['damageType']}")
+            elif isinstance(attack['attackBonus'], str):
+                attacks.append(f"**{attack['name']}:** {attack['attackBonus']}, {attack['damage']}, {attack['damageType']}")
+            else:
+                attacks.append(f"**{attack['name']}:** {attack['attackBonus']:+d}, {attack['damage']}, {attack['damageType']}")
         embed = discord.Embed(title='Attacks', description='\n'.join(attacks), color=character.color())
         embed.set_author(**character.embed_author())
         msg = await ctx.send(embed=embed)
