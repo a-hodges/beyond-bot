@@ -328,7 +328,6 @@ class Character:
         }]
 
     def get_custom_attack(self, atkIn):
-        # ... add saving throws
         name = atkIn['name']
         attackBonus = None
         damageBonus = (atkIn['fixedValue'] or 0) + (atkIn['damageBonus'] or 0)
@@ -336,7 +335,13 @@ class Character:
             attackBonus = self.get_mod(atkIn['statId']) + (atkIn['toHitBonus'] or 0)
             if atkIn['isProficient']:
                 attackBonus += self.stats['prof']
-            damageBonus = (atkIn['fixedValue'] or 0) + self.get_mod(atkIn['statId']) + (atkIn['damageBonus'] or 0)
+            damageBonus += self.get_mod(atkIn['statId'])
+        elif atkIn['saveStatId'] is not None and atkIn['statId'] is not None:
+            attackBonus = 8 + self.get_mod(atkIn['statId']) + self.stats['prof']
+            if atkIn['fixedSaveDc']:
+                attackBonus = atkIn['fixedSaveDc']
+            save = self.stat_list[atkIn['saveStatId'] - 1][:3]
+            attackBonus = f"DC {attackBonus} {save} save"
         diceCount = atkIn['diceCount']
         diceType = atkIn['diceType']
         damageType = self.damage_types.get(atkIn['damageTypeId'])
@@ -456,7 +461,7 @@ class Character:
         elif atkIn['requiresSavingThrow']:
             attackBonus = 8 + self.get_mod(ability) + self.stats['prof']
             attackBonus = self.get_value('spell-save-dc', base=attackBonus)
-            save = self.stat_list[atkIn['saveDcAbilityId']][:3]
+            save = self.stat_list[atkIn['saveDcAbilityId'] - 1][:3]
             attackBonus = f"DC {attackBonus} {save} save"
         else:
             attackBonus = None
