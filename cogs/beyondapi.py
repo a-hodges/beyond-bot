@@ -328,6 +328,7 @@ class Character:
         }]
 
     def get_custom_attack(self, atkIn):
+        # action types: 1=weapon, 2=spell, 3=generic
         name = atkIn['name']
         attackBonus = None
         damageBonus = (atkIn['fixedValue'] or 0) + (atkIn['damageBonus'] or 0)
@@ -335,6 +336,9 @@ class Character:
             attackBonus = self.get_mod(atkIn['statId']) + (atkIn['toHitBonus'] or 0)
             if atkIn['isProficient']:
                 attackBonus += self.stats['prof']
+            if atkIn['rangeId'] == 2 and atkIn['actionType'] == 1:
+                if 'Archery' in self.fighting_styles:
+                    attackBonus += 2
             damageBonus += self.get_mod(atkIn['statId'])
         elif atkIn['saveStatId'] is not None and atkIn['statId'] is not None:
             attackBonus = 8 + self.get_mod(atkIn['statId']) + self.stats['prof']
@@ -573,4 +577,4 @@ if __name__ == '__main__':
     # pprint(character.adjustments)
     # pprint(character.stats)
     # pprint(character.skills)
-    # pprint(character.attacks)
+    pprint(character.attacks)
