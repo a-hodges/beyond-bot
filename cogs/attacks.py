@@ -30,12 +30,12 @@ class AttackCategory (util.Cog):
         embed = discord.Embed(title=name, color=character.color())
         embed.set_author(**character.embed_author())
         if attack['attackBonus'] is not None:
-            if isinstance(attack['attackBonus'], str):
-                embed.add_field(name='attack roll', value=attack['attackBonus'])
-            else:
+            if isinstance(attack['attackBonus'], (int, float)):
                 text = []
                 result = rolls.do_roll(f"1d20+{attack['attackBonus']}", advantage=ctx.advantage, output=text)
                 embed.add_field(name='attack roll', value='\n'.join(text), inline=True)
+            else:
+                embed.add_field(name='attack roll', value=attack['attackBonus'])
         if attack['damage'] is not None:
             text = []
             result = rolls.do_roll(attack['damage'], output=text)
@@ -61,12 +61,10 @@ class AttackCategory (util.Cog):
         character = util.get_character(ctx, ctx.author.id)
         attacks = []
         for attack in character.attacks:
-            if attack['attackBonus'] is None:
-                attacks.append(f"**{attack['name']}:** None, {attack['damage']}, {attack['damageType']}")
-            elif isinstance(attack['attackBonus'], str):
-                attacks.append(f"**{attack['name']}:** {attack['attackBonus']}, {attack['damage']}, {attack['damageType']}")
-            else:
+            if isinstance(attack['attackBonus'], (int, float)):
                 attacks.append(f"**{attack['name']}:** {attack['attackBonus']:+d}, {attack['damage']}, {attack['damageType']}")
+            else:
+                attacks.append(f"**{attack['name']}:** {attack['attackBonus']}, {attack['damage']}, {attack['damageType']}")
         embed = discord.Embed(title='Attacks', description='\n'.join(attacks), color=character.color())
         embed.set_author(**character.embed_author())
         msg = await ctx.send(embed=embed)
