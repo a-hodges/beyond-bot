@@ -320,12 +320,12 @@ class Character:
         return out
 
     def get_attack(self, atkIn):
-        return {
+        return [{
             'name': atkIn['name'],
             'attackBonus': None,
             'damage': f"{atkIn['dice']['diceString']}",
             'damageType': self.damage_types.get(atkIn['damageTypeId']),
-        }
+        }]
 
     def get_custom_attack(self, atkIn):
         name = atkIn['name']
@@ -344,12 +344,12 @@ class Character:
         if damageBonus:
             damage += f"{damageBonus:+d}"
 
-        return {
+        return [{
             'name': name,
             'attackBonus': attackBonus,
             'damage': damage,
             'damageType': damageType,
-        }
+        }]
 
     def get_weapon_attack(self, atkIn):
         prof = self.stats['prof']
@@ -458,7 +458,7 @@ class Character:
             'damageType': damageType,
             'name': atkIn['name'],
         }
-        return out
+        return [out]
 
     @property
     def attacks(self):
@@ -479,10 +479,10 @@ class Character:
         for src in self.json['actions'].values():
             for action in src:
                 if action['displayAsAttack']:
-                    extend([self.get_attack(action)])
+                    extend(self.get_attack(action))
         for action in self.json['customActions']:
             # if action['displayAsAttack'] != False:
-                extend([self.get_custom_attack(action)])
+                extend(self.get_custom_attack(action))
         for item in self.json['inventory']:
             if item['equipped'] and (item['definition']['filterType'] == "Weapon" or item.get('displayAsAttack')):
                 extend(self.get_weapon_attack(item))
@@ -491,13 +491,13 @@ class Character:
             for spell in spells:
                 daa = self.adjustments.get('Display As Attack', {}).get(spell['id'], {}).get('value')
                 if spell['displayAsAttack'] if daa is None else daa:
-                    extend([self.get_spell_attack(spell['definition'], spell['spellCastingAbilityId'])])
+                    extend(self.get_spell_attack(spell['definition'], spell['spellCastingAbilityId']))
         for spells in self.json['classSpells']:
             for spell in spells['spells']:
                 daa = self.adjustments.get('Display As Attack', {}).get(spell['id'], {}).get('value')
                 if spell['displayAsAttack'] if daa is None else daa:
                     stat = self.classes[spells['characterClassId']]['definition']['spellCastingAbilityId']
-                    extend([self.get_spell_attack(spell['definition'], stat)])
+                    extend(self.get_spell_attack(spell['definition'], stat))
         return attacks
 
     # ----#-   Custom getters
