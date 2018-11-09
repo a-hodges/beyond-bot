@@ -413,10 +413,13 @@ class Character:
                 versDie = int(versDie)
             else:
                 raise ValueError(f'Invalid Versatile die: {vers}')
+            damage = f"{diceCount}d{versDie}"
+            if damageBonus:
+                damage += f"{damageBonus:+d}"
             out.append(
                 {
                     'attackBonus': attackBonus,
-                    'damage': f"{diceCount}d{versDie}+{damageBonus}",
+                    'damage': damage,
                     'damageType': damageType,
                     'name': f"{name}2h",
                 }
