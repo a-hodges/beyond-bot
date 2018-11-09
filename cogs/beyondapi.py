@@ -457,7 +457,7 @@ class Character:
             attackBonus = 8 + self.get_mod(ability) + self.stats['prof']
             attackBonus = self.get_value('spell-save-dc', base=attackBonus)
             save = self.stat_list[atkIn['saveDcAbilityId']][:3]
-            attackBonus = f"save: {attackBonus} {save}"
+            attackBonus = f"DC {attackBonus} {save} save"
         else:
             attackBonus = None
         out = {
