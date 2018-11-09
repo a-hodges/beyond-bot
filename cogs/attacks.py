@@ -30,9 +30,12 @@ class AttackCategory (util.Cog):
         embed = discord.Embed(title=name, color=character.color())
         embed.set_author(**character.embed_author())
         if attack['attackBonus'] is not None:
-            text = []
-            result = rolls.do_roll(f"1d20+{attack['attackBonus']}", advantage=ctx.advantage, output=text)
-            embed.add_field(name='attack roll', value='\n'.join(text), inline=True)
+            if isinstance(attack['attackBonus'], str):
+                embed.add_field(name='attack roll', value=attack['attackBonus'])
+            else:
+                text = []
+                result = rolls.do_roll(f"1d20+{attack['attackBonus']}", advantage=ctx.advantage, output=text)
+                embed.add_field(name='attack roll', value='\n'.join(text), inline=True)
         if attack['damage'] is not None:
             text = []
             result = rolls.do_roll(attack['damage'], output=text)

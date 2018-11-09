@@ -328,6 +328,7 @@ class Character:
         }]
 
     def get_custom_attack(self, atkIn):
+        # ... add saving throws
         name = atkIn['name']
         attackBonus = None
         damageBonus = (atkIn['fixedValue'] or 0) + (atkIn['damageBonus'] or 0)
@@ -428,7 +429,6 @@ class Character:
         return out
 
     def get_spell_attack(self, atkIn, ability):
-        # ... add saving throws
         for mod in atkIn['modifiers']:
             if mod['type'] == 'damage':
                 break
@@ -453,6 +453,11 @@ class Character:
         if atkIn['requiresAttackRoll']:
             attackBonus = self.get_mod(ability) + self.stats['prof']
             attackBonus = self.get_value('spell-attacks', base=attackBonus)
+        elif atkIn['requiresSavingThrow']:
+            attackBonus = 8 + self.get_mod(ability) + self.stats['prof']
+            attackBonus = self.get_value('spell-save-dc', base=attackBonus)
+            save = self.stat_list[atkIn['saveDcAbilityId']][:3]
+            attackBonus = f"save: {attackBonus} {save}"
         else:
             attackBonus = None
         out = {
