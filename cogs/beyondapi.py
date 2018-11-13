@@ -278,17 +278,17 @@ class Character:
             self._fighting_styles = fighting_styles
         return self._fighting_styles
 
-    def get_prof(self, proftype):
+    def get_prof(self, proftype=None):
         if not hasattr(self, 'profs'):
-            p = []
+            p = set()
             for modtype in self.json['modifiers'].values():
                 for mod in modtype:
                     if mod['type'] == 'proficiency':
                         if mod['subType'] == 'simple-weapons':
-                            p.extend(self.weapons.get('simple', []))
+                            p.update(map(str.lower, self.weapons.get('simple', [])))
                         elif mod['subType'] == 'martial-weapons':
-                            p.extend(self.weapons.get('martial', []))
-                        p.append(mod['friendlySubtypeName'])
+                            p.update(map(str.lower, self.weapons.get('martial', [])))
+                        p.add(mod['friendlySubtypeName'].lower())
             self.profs = p
         return proftype.lower() in self.profs
 
@@ -318,13 +318,42 @@ class Character:
             if key in adj and itemId in adj[key] and 'value' in adj[key][itemId]:
                 out[key] = adj[key][itemId]['value'] or out[key]
         return out
+    
+    @property
+    def martial_arts_die(self):
+        monk = [c for c in self.json['classes'] if c['definition']['name'] == 'Monk']
+        if len(monk) != 1:
+            return None
+        martialArts = [f for f in monk[0]['classFeatures'] if f['definition']['name'] == 'Martial Arts'][0]
+        return martialArts['levelScale']['dice']['diceValue']
 
     def get_attack(self, atkIn):
+        # unarmed strikes???
+        # ...
+        name = atkIn['name']
+        attackBonus = None
+        damage = None
+        damageType = None
+        if atkIn['attackSubtype'] == 3:
+            if atkIn['isMartialArts'] and self.martial_arts_die:
+                attackBonus = max(self.stats['strmod'], self.stats['dexmod'])
+                damage = self.martial_arts_die
+                damage = f"1d{damage}{attackBonus:+d}"
+            else:
+                attackBonus = self.stats['strmod']
+                damage = 1 + self.stats['strmod']
+                if damage <= 0:
+                    damage = None
+            if atkIn['isProficient']:
+                attackBonus += self.stats['prof']
+            damageType = self.damage_types.get(atkIn['damageTypeId'])
+        else:
+            raise ValueError('Unknown attack type')
         return [{
-            'name': atkIn['name'],
-            'attackBonus': None,
-            'damage': f"{atkIn['dice']['diceString']}",
-            'damageType': self.damage_types.get(atkIn['damageTypeId']),
+            'name': name,
+            'attackBonus': attackBonus,
+            'damage': damage,
+            'damageType': damageType,
         }]
 
     def get_custom_attack(self, atkIn):
@@ -367,8 +396,12 @@ class Character:
         weirdBonuses = self.get_specific_item_bonuses(atkIn['id'])
         name = weirdBonuses['Name Override'] or itemdef['name']
         # get attack modifier stat
+        martialArts = False
         if weirdBonuses['Is Hexblade']:
             attackMod = self.get_mod('charisma')
+        elif itemdef['isMonkWeapon'] and self.martial_arts_die:
+            attackMod = max(self.stats['strmod'], self.stats['dexmod'])
+            martialArts = self.martial_arts_die
         else:
             attackMod = self.get_relevant_atkmod(itemdef)
         # +n magic modifier
@@ -385,6 +418,8 @@ class Character:
         # damage
         diceCount = itemdef['damage']['diceCount']
         diceType = itemdef['damage']['diceValue']
+        if martialArts:
+            diceType = max(diceType, martialArts)
         damageBonus = attackMod + magicBonus + weirdBonuses['Fixed Value Bonus']
         if weirdBonuses['Fixed Value Override']:
             damageBonus = weirdBonuses['Fixed Value Override']
@@ -423,6 +458,8 @@ class Character:
                 versDie = int(versDie)
             else:
                 raise ValueError(f'Invalid Versatile die: {vers}')
+            if martialArts:
+                versDie = max(versDie, martialArts)
             damage = f"{diceCount}d{versDie}"
             if damageBonus:
                 damage += f"{damageBonus:+d}"
@@ -577,4 +614,4 @@ if __name__ == '__main__':
     # pprint(character.adjustments)
     # pprint(character.stats)
     # pprint(character.skills)
-    pprint(character.attacks)
+    # pprint(character.attacks)
