@@ -86,8 +86,12 @@ async def on_message(message):
     elif ctx.valid:
         await bot.invoke(ctx)
     else:
-        mention = message.guild.get_member(bot.user.id).mention if message.guild else bot.user.mention
-        expr = re.compile(r'{}\s*(.*)(?=\n|$)'.format(re.escape(mention)))
+        mention = re.escape(bot.user.mention)
+        if message.guild:
+            mention = r'(?:{}|{})'.format(mention,
+                re.escape(message.guild.get_member(bot.user.id).mention),
+            )
+        expr = re.compile(r'{}\s*(.*)(?=\n|$)'.format(mention)
         prefix = await get_prefix(bot, message)
         for command in expr.findall(message.content):
             m2 = copy.copy(message)
