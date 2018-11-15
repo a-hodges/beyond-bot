@@ -91,7 +91,7 @@ async def on_message(message):
             mention = r'(?:{}|{})'.format(mention,
                 re.escape(message.guild.get_member(bot.user.id).mention),
             )
-        expr = re.compile(r'{}\s*(.*)(?=\n|$)'.format(mention)
+        expr = re.compile(r'{}\s*(.*)(?=\n|$)'.format(mention))
         prefix = await get_prefix(bot, message)
         for command in expr.findall(message.content):
             m2 = copy.copy(message)
